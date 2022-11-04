@@ -8,22 +8,34 @@ const auditsInSeconds = [
   "speed-index",
   "largest-contentful-paint",
   "interactive",
+  "first-meaningful-paint",
+  "mainthread-work-breakdown",
+  "bootup-time",
 ];
 
-const auditsInMilliseconds = ["total-blocking-time"];
+const createCsv = (fields, data, name) => {
+  const csv = papa.unparse({
+    fields: fields,
+    data: data,
+  });
+  fs.writeFileSync(`${name}.csv`, csv, "utf8");
+};
 
 const getAverageScore = (audits, auditType) => {
   const auditList = audits[auditType];
-  const scoreList = auditList.map((audit) => audit.numericValue);
+  const scoreList = [];
+  let numericUnit = "";
+  auditList.forEach((audit) => {
+    scoreList.push(audit.numericValue);
+    if (!numericUnit) numericUnit = audit.numericUnit;
+  });
   const scoreAvg = scoreList.reduce((a, b) => a + b) / scoreList.length;
   let rounded;
   if (auditsInSeconds.includes(auditType)) {
     const scoreAvgSecs = scoreAvg / 1000;
     rounded = Math.round(scoreAvgSecs * 10) / 10;
-  } else if (auditsInMilliseconds.includes(auditType)) {
-    rounded = Math.round(scoreAvg);
   } else {
-    rounded = Math.round(scoreAvg * 1000) / 1000;
+    rounded = Math.round(scoreAvg);
   }
   return rounded;
 };
@@ -46,10 +58,9 @@ const getRunsforUrl = (filePath) => {
   return runs;
 };
 
-const getRunAuditsJSON = (run) => {
+const getRunAuditsJSON = (runFilePath) => {
   let auditData = {};
-  let runData = fs.readFileSync(run);
-  runData = JSON.parse(fs.readFileSync(run));
+  const runData = JSON.parse(fs.readFileSync(runFilePath));
   Object.keys(runData.audits).forEach((audit) => {
     if (!auditData[audit]) {
       auditData[audit] = [runData.audits[audit]];
@@ -61,23 +72,18 @@ const getRunAuditsJSON = (run) => {
 };
 
 const getReleventAuditsFromRuns = (runs) => {
-  const auditOutput = params.auditOutput;
   let auditsByType = {};
   runs.forEach((run) => {
-    if (auditOutput === "csv") {
-      runData = fs.readFileSync(run).toString().split("\n");
-    } else if (auditOutput === "json") {
-      const runAudits = getRunAuditsJSON(run);
-      Object.keys(runAudits).forEach((runAudit) => {
-        if (Object.keys(auditsByType).includes(runAudit)) {
-          auditsByType[runAudit] = auditsByType[runAudit].concat(
-            runAudits[runAudit]
-          );
-        } else {
-          auditsByType[runAudit] = runAudits[runAudit];
-        }
-      });
-    }
+    const runAudits = getRunAuditsJSON(run);
+    Object.keys(runAudits).forEach((runAudit) => {
+      if (Object.keys(auditsByType).includes(runAudit)) {
+        auditsByType[runAudit] = auditsByType[runAudit].concat(
+          runAudits[runAudit]
+        );
+      } else {
+        auditsByType[runAudit] = runAudits[runAudit];
+      }
+    });
   });
   Object.keys(auditsByType).forEach((auditType) => {
     const auditIsRelevant = params.audits.includes(auditType);
@@ -86,60 +92,69 @@ const getReleventAuditsFromRuns = (runs) => {
   return auditsByType;
 };
 
-const getAvgPerfScore = (runs) => {
-  let avg = 0;
-  if (params.auditOutput === "json") {
-    const scores = runs.map((run) => {
-      const runData = JSON.parse(fs.readFileSync(run));
-      return runData.categories.performance.score;
-    });
-    avg = scores.reduce((a, b) => a + b) / scores.length;
-    avg = Math.round(avg * 100);
-  }
-  return avg;
+const getFormattedUrl = (runData) => {
+  const url = new URL(runData.requestedUrl);
+  const format = url[params.output.urlFormat];
+  if (!format) return url.href;
+  return format;
+};
+
+const getAvgScoreInfoForCategory = (category, runFilePaths) => {
+  let url;
+  let scoreTitle;
+  // Make list of all scores for category
+  const scores = [];
+  runFilePaths.forEach((runFilePath, index) => {
+    const runData = JSON.parse(fs.readFileSync(runFilePath));
+    scores.push(runData.categories[category].score);
+    if (index === 0) scoreTitle = `${runData.categories[category].title} Score`;
+    // Get URL formatted as specified in params.json
+    url = getFormattedUrl(runData);
+  });
+  // Get average score
+  let avgScore = 0;
+  avgScore = scores.reduce((a, b) => a + b) / scores.length;
+  avgScore = Math.round(avgScore * 100);
+  return { url, title: scoreTitle, avgScore };
 };
 
 const processReport = async (reportName) => {
   console.log(`🤖 Processing report ${reportName}...`);
   let reportObj = {};
   let scores = {};
+  let csvFields = ["URL"];
+  let dataArr = [];
   getReportUrls(reportName).forEach((reportUrl) => {
     reportObj[reportUrl] = {};
     const reportUrlDirPath = `${reportName}/${reportUrl}`;
     const runs = getRunsforUrl(reportUrlDirPath);
     reportObj[reportUrl] = getReleventAuditsFromRuns(runs);
-    scores[reportUrl] = getAvgPerfScore(runs);
+    // Get average scores for each Lighthouse category requested in params.json
+    params.categories.forEach((category) => {
+      if (!scores[reportUrl]) scores[reportUrl] = {};
+      scores[reportUrl][category] = getAvgScoreInfoForCategory(category, runs);
+      // Add category title to CSV fields
+      if (!csvFields.includes(scores[reportUrl][category].title))
+        csvFields.push(scores[reportUrl][category].title);
+    });
   });
 
-  let dataArr = [];
   Object.keys(reportObj).forEach((reportUrl) => {
-    dataArr.push([
-      reportUrl,
-      scores[reportUrl],
-      getAverageScore(reportObj[reportUrl], "first-contentful-paint"),
-      getAverageScore(reportObj[reportUrl], "speed-index"),
-      getAverageScore(reportObj[reportUrl], "largest-contentful-paint"),
-      getAverageScore(reportObj[reportUrl], "interactive"),
-      getAverageScore(reportObj[reportUrl], "total-blocking-time"),
-      getAverageScore(reportObj[reportUrl], "cumulative-layout-shift"),
-    ]);
+    const formattedUrl = scores[reportUrl][params.categories[0]].url;
+    const csvRow = [formattedUrl];
+    Object.keys(scores[reportUrl]).forEach((category) => {
+      csvRow.push(scores[reportUrl][category].avgScore);
+    });
+    const auditTypes = reportObj[reportUrl];
+    Object.keys(auditTypes).forEach((auditList) => {
+      csvRow.push(getAverageScore(auditTypes, auditList));
+      if (!csvFields.includes(auditTypes[auditList][0].title))
+        csvFields.push(auditTypes[auditList][0].title);
+    });
+    dataArr.push(csvRow);
   });
 
-  const csvFields = [
-    "URL",
-    "Score",
-    "FCP (s)",
-    "SI (s)",
-    "LCP (s)",
-    "TTI (s)",
-    "TBT (ms)",
-    "CLS",
-  ];
-  const csv = papa.unparse({
-    fields: csvFields,
-    data: dataArr,
-  });
-  fs.writeFileSync(`${reportName}.csv`, csv, "utf8");
+  createCsv(csvFields, dataArr, reportName);
   console.log(`🤖 Finished report`);
 };
 

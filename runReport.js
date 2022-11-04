@@ -12,7 +12,7 @@ const dateTimeString = () => {
 };
 
 const makeReportDir = () => {
-  const reportName = `reports/report_${dateTimeString()}`;
+  const reportName = `reports/${dateTimeString()}`;
   if (!fs.existsSync("reports")) fs.mkdirSync("reports");
   if (!fs.existsSync(reportName)) fs.mkdirSync(reportName);
   return reportName;
@@ -28,7 +28,7 @@ const getTargetDir = (reportDir, url) => {
 };
 
 const getFileName = () => {
-  return `${dateTimeString()}.${params.auditOutput}`;
+  return `${dateTimeString()}.json`;
 };
 
 const launchChromeAndRunLighthouse = async (chrome, url, reportDir) => {
@@ -36,7 +36,7 @@ const launchChromeAndRunLighthouse = async (chrome, url, reportDir) => {
   try {
     const options = {
       port: chrome.port,
-      output: params.auditOutput,
+      output: "json",
       onlyCategories: params.categories,
       onlyAudits: params.audits,
     };
@@ -60,8 +60,8 @@ const runReport = async () => {
   const reportDir = makeReportDir();
   console.log(`🤖 Start report ${reportDir}`);
   console.log("🤖 Launching Chrome...");
-  // const chrome = await chromeLauncher.launch({ chromeFlags: ["--headless"] });
-  const chrome = await chromeLauncher.launch();
+  const chrome = await chromeLauncher.launch({ chromeFlags: ["--headless"] });
+  // const chrome = await chromeLauncher.launch();
   try {
     for (const url of params.urls) {
       if (!url) continue;
