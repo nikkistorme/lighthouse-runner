@@ -1,7 +1,7 @@
 import fs from "fs";
 import papa from "papaparse";
 
-import params from "./params.js";
+import params from "../params.js";
 
 const auditsInSeconds = [
   "first-contentful-paint",

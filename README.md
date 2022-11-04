@@ -1,6 +1,29 @@
 # Lighthouse Runner
 
-# List of Audit Types
+## Getting Started
+
+Once you have the code, follow these steps to get started:
+
+1. Install the dependencies: `npm install`
+2. Create a parameter file: `npm run init-params`
+3. Edit the parameter file to set the parameters for your report. Parameters include [URLs](#urls), [categories](#categories), [audits](#audits), [output](#output), and [run count](#run-count).
+4. Run the report: `npm run report`
+
+## Parameters
+
+### URLs
+
+### Categories
+
+The categories parameter is an array of strings that specify which categories to run. The default is to run all categories. The available categories are:
+
+- "performance",
+- "accessibility",
+- "best-practices",
+- "seo",
+- "pwa",
+
+### Audits
 
 - "viewport",
 - "first-contentful-paint",
@@ -62,3 +85,7 @@
 - "no-document-write",
 - "uses-http2",
 - "uses-passive-event-listeners"
+
+### Output
+
+### Run Count

@@ -2,7 +2,7 @@ import lighthouse from "lighthouse";
 import chromeLauncher from "chrome-launcher";
 import fs from "fs";
 
-import params from "./params.js";
+import params from "../params.js";
 
 const dateTimeString = () => {
   const now = new Date();
