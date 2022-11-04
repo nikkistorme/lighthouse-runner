@@ -6,16 +6,29 @@ Once you have the code, follow these steps to get started:
 
 1. Install the dependencies: `npm install`
 2. Create a parameter file: `npm run init-params`
-3. Edit the parameter file to set the parameters for your report. Parameters include [URLs](#urls), [categories](#categories), [audits](#audits), [output](#output), and [run count](#run-count).
+3. Edit the parameter file to set the parameters for your report. Parameters include [`urls`](#urls), [`categories`](#categories), [`audits`](#audits), [`output`](#output), and [`runCount`](#runcount).
 4. Run the report: `npm run report`
 
 ## Parameters
 
-### URLs
+There are several parameters that can be set in the `params.json` file. The parameters are:
 
-### Categories
+### `urls`
 
-The categories parameter is an array of strings that specify which categories to run. The default is to run all categories. The available categories are:
+`urls: string[]`
+The `urls` parameter is a list of URLs to test. For example:
+
+```json
+"urls": [
+  "https://www.example.com",
+  "https://www.example.com/about"
+]
+```
+
+### `categories`
+
+`categories: string[]`
+The `categories` parameter is a list of which lighthouse report categories to run. The available categories are:
 
 - "performance",
 - "accessibility",
@@ -23,7 +36,10 @@ The categories parameter is an array of strings that specify which categories to
 - "seo",
 - "pwa",
 
-### Audits
+### `audits`
+
+`audits: string[]`
+The `audits` parameter is a list of which lighthouse report audits to run. The available audits are:
 
 - "viewport",
 - "first-contentful-paint",
@@ -86,6 +102,29 @@ The categories parameter is an array of strings that specify which categories to
 - "uses-http2",
 - "uses-passive-event-listeners"
 
-### Output
+### `output`
 
-### Run Count
+`output: Object`
+The `output` parameter is an object that specifies the format of the report summary.
+
+#### `output.format`
+
+`output.format: string`
+
+The `output.format` parameter is a string that specifies the format of the report summary. The available formats are:
+
+- "json"
+
+#### `output.urlFormat`
+
+`output.urlFormat: string`
+
+The `output.urlFormat` parameter is a string that specifies the format of the URL in the report summary. The available formats are:
+
+- "href"
+- "pathname"
+
+### `runCount`
+
+`runCount: number`
+The `runCount` parameter is the number of times to run a lighthouse report for each URL. The average score over all runs for each URL will be calculated for each category and audit.
