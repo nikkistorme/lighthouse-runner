@@ -14,11 +14,14 @@ Once you have the code, follow these steps to get started:
 There are several parameters that can be set in the `params.json` file. The parameters are:
 
 | Name                             | Type       |
-|----------------------------------|------------|
+| -------------------------------- | ---------- |
 | [urls](#urls-string)             | `string[]` |
 | [categories](#categories-string) | `string[]` |
 | [audits](#audits-string)         | `string[]` |
 | [output](#output-object)         | `Object`   |
+| [runCount](#runcount-number)     | `number`   |
+| [headless](#headless-boolean)    | `boolean`  |
+| [device](#device-string)         | `string`   |
 
 ### `urls: string[]`
 
@@ -111,13 +114,24 @@ The `audits` parameter is a list of which lighthouse report audits to run. The a
 The `output` parameter is an object that specifies the format of the report summary.
 
 #### Options
-| Name       | Type       | Description                                                                                |
-|------------|------------|--------------------------------------------------------------------------------------------|
-| format     | `string`   | The format of the report summary. The available formats are `json`, `...`.                 |
-| urlFormat  | `string`   | The format of the URL in the report summary. The available formats are `href`, `pathname`. |
 
+| Name      | Type     | Description                                                                                |
+| --------- | -------- | ------------------------------------------------------------------------------------------ |
+| format    | `string` | The format of the report summary. The available formats are `json`, `...`.                 |
+| urlFormat | `string` | The format of the URL in the report summary. The available formats are `href`, `pathname`. |
 
-### `runCount: `
+### `runCount: number`
 
-`runCount: number`
 The `runCount` parameter is the number of times to run a lighthouse report for each URL. The average score over all runs for each URL will be calculated for each category and audit.
+
+### `headless: boolean`
+
+The `headless` parameter is a boolean that specifies whether to run the lighthouse report in headless mode. Default is `true`.
+
+### `device: string`
+
+The `device` parameter is a string that specifies the device preset to run the lighthouse report on. Default is `"mobile"`. The available options are:
+
+- "desktop",
+- "mobile",
+- "both"

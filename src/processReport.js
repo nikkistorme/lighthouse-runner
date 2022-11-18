@@ -122,7 +122,7 @@ const processReport = async (reportName) => {
   console.log(`🤖 Processing report ${reportName}...`);
   let reportObj = {};
   let scores = {};
-  let csvFields = ["URL"];
+  let csvFields = ["URL", "Device"];
   let dataArr = [];
   getReportUrls(reportName).forEach((reportUrl) => {
     reportObj[reportUrl] = {};
@@ -141,7 +141,7 @@ const processReport = async (reportName) => {
 
   Object.keys(reportObj).forEach((reportUrl) => {
     const formattedUrl = scores[reportUrl][params.categories[0]].url;
-    const csvRow = [formattedUrl];
+    const csvRow = [formattedUrl, params.device];
     Object.keys(scores[reportUrl]).forEach((category) => {
       csvRow.push(scores[reportUrl][category].avgScore);
     });

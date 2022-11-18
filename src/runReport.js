@@ -1,6 +1,7 @@
 import lighthouse from "lighthouse";
 import chromeLauncher from "chrome-launcher";
 import fs from "fs";
+import desktopConfig from "lighthouse/lighthouse-core/config/desktop-config.js";
 
 import params from "../params.js";
 
@@ -35,12 +36,33 @@ const launchChromeAndRunLighthouse = async (chrome, url, reportDir) => {
   console.log(`🤖 Beginning audit for ${url}...`);
   try {
     const options = {
+      logLevel: "info",
+      extends: "lighthouse:default",
       port: chrome.port,
       output: "json",
       onlyCategories: params.categories,
       onlyAudits: params.audits,
     };
-    const results = await lighthouse(url, options);
+    let results;
+    switch (params.device) {
+      case "desktop":
+        results = await lighthouse(url, options, desktopConfig);
+        allDesktopResults.push(results);
+        break;
+      case "mobile":
+        results = await lighthouse(url, options);
+        allMobileResults.push(results);
+        break;
+      case "both":
+        const mobileResults = await lighthouse(url, options);
+        const desktopResults = await lighthouse(url, options, desktopConfig);
+        allMobileResults.push(mobileResults);
+        allDesktopResults.push(desktopResults);
+      default:
+        results = await lighthouse(url, options);
+        allMobileResults.push(results);
+        break;
+    }
     const dirName = getTargetDir(reportDir, url);
     const fileName = getFileName();
     await fs.writeFileSync(`${dirName}/${fileName}`, results.report);

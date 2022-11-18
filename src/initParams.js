@@ -27,6 +27,8 @@ const defaultParams = `export default ${JSON.stringify(
       "cumulative-layout-shift",
       "interactive",
     ],
+    device: "mobile",
+    headless: true,
   },
   null,
   2
